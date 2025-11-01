@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aion"
+version = "0.1.0"
+description = "EE448 Advanced Wireless Communications Engineering Project to Optimize Adaptive Modulation and Coding with Reinforcement Learning"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "numpy",
+    "scipy",
+    "pyyaml",
+    "tqdm",
+    "matplotlib",
+    "plotly",
+    "pyqt6"
+]
+
+[project.urls]
+Homepage = "https://github.com/steward/aion"
