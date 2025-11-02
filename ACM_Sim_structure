@@ -1,0 +1,38 @@
+"""
+ACM Simulation Package Structure
+
+Directory layout:
+acm_simulation/
+├── __init__.py
+├── packet_generator.py
+├── acm_controller.py
+├── pilot_inserter.py
+├── acm_flowgraph.py
+├── acm_flowgraph.grc
+└── utils/
+    ├── __init__.py
+    └── channel_estimation.py
+"""
+
+# File: acm_simulation/__init__.py
+"""
+ACM Simulation Package
+Adaptive Coding and Modulation for satellite communications
+"""
+
+__version__ = "1.0.0"
+__author__ = "ACM Research"
+
+from .packet_generator import PacketGenerator
+from .acm_controller import ACMController, ModulationScheme, CodingScheme
+from .pilot_inserter import PilotInserter
+from .acm_flowgraph import ACMFlowgraph
+
+__all__ = [
+    'PacketGenerator',
+    'ACMController',
+    'ModulationScheme',
+    'CodingScheme',
+    'PilotInserter',
+    'ACMFlowgraph'
+]

@@ -1,0 +1,395 @@
+options:
+  parameters:
+    author: ACM Research
+    catch_exceptions: 'True'
+    category: '[ACM]'
+    cmake_opt: ''
+    comment: ''
+    copyright: ''
+    description: Adaptive Coding and Modulation Simulation
+    gen_cmake: 'On'
+    gen_linking: dynamic
+    generate_options: qt_gui
+    hier_block_src_path: '.:'
+    id: acm_simulation_grc
+    max_nouts: '0'
+    output_language: python
+    placement: (0,0)
+    qt_qss_theme: ''
+    realtime_scheduling: ''
+    run: 'True'
+    run_command: '{python} -u {filename}'
+    run_options: prompt
+    sizing_mode: fixed
+    thread_safe_setters: ''
+    title: ACM Simulation
+    window_size: (1280,1024)
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 8]
+    rotation: 0
+    state: enabled
+
+blocks:
+- name: noise_voltage
+  id: variable
+  parameters:
+    comment: ''
+    value: 1.0/numpy.sqrt(2.0*10**(snr_db/10.0))
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 84]
+    rotation: 0
+    state: enabled
+- name: samp_rate
+  id: variable
+  parameters:
+    comment: ''
+    value: '1000000'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [184, 12]
+    rotation: 0
+    state: enabled
+- name: snr_db
+  id: variable_qtgui_range
+  parameters:
+    comment: ''
+    gui_hint: ''
+    label: SNR (dB)
+    min_len: '200'
+    orient: QtCore.Qt.Horizontal
+    rangeType: float
+    start: '-5'
+    step: '0.5'
+    stop: '30'
+    value: '10'
+    widget: counter_slider
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [296, 12]
+    rotation: 0
+    state: true
+- name: blocks_file_sink
+  id: blocks_file_sink
+  parameters:
+    affinity: ''
+    alias: ''
+    append: 'False'
+    comment: ''
+    file: /tmp/acm_output.bin
+    type: byte
+    unbuffered: 'False'
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1304, 320.0]
+    rotation: 0
+    state: true
+- name: blocks_message_debug
+  id: blocks_message_debug
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    en_uvec: 'True'
+    log_level: info
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [40, 472]
+    rotation: 0
+    state: true
+- name: blocks_throttle
+  id: blocks_throttle
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    ignoretag: 'True'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    samples_per_second: samp_rate
+    type: byte
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [344, 312.0]
+    rotation: 0
+    state: true
+- name: channels_channel_model
+  id: channels_channel_model
+  parameters:
+    affinity: ''
+    alias: ''
+    block_tags: 'False'
+    comment: AWGN Channel
+    epsilon: '1.0'
+    freq_offset: '0.0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    noise_voltage: noise_voltage
+    seed: '0'
+    taps: '1.0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [888, 312.0]
+    rotation: 0
+    state: true
+- name: digital_chunks_to_symbols
+  id: digital_chunks_to_symbols_xx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: QPSK Modulator
+    dimension: '1'
+    in_type: byte
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    num_ports: '1'
+    out_type: complex
+    symbol_table: '[-1-1j, -1+1j, 1-1j, 1+1j]'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [680, 328.0]
+    rotation: 0
+    state: true
+- name: digital_constellation_decoder
+  id: digital_constellation_decoder_cb
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: QPSK Demodulator
+    constellation: digital.constellation_qpsk()
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1096, 336.0]
+    rotation: 0
+    state: true
+- name: import_acm
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: from acm_simulation import PacketGenerator
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [232, 184.0]
+    rotation: 0
+    state: disabled
+- name: import_numpy
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: import numpy
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 84]
+    rotation: 0
+    state: true
+- name: import_sys
+  id: import
+  parameters:
+    alias: ''
+    comment: ''
+    imports: import sys
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 132]
+    rotation: 0
+    state: true
+- name: packet_gen
+  id: epy_block
+  parameters:
+    _source_code: "import numpy as np\nfrom gnuradio import gr\nimport pmt\nimport\
+      \ struct\nfrom enum import IntEnum\n\nclass PacketType(IntEnum):\n    DATA =\
+      \ 0\n    VOICE = 1\n    VIDEO = 2\n    CONTROL = 3\n\nclass blk(gr.sync_block):\n\
+      \    def __init__(self, packet_rate=100):\n        gr.sync_block.__init__(self,\
+      \ name=\"packet_gen\", in_sig=None, out_sig=[np.uint8])\n        self.packet_rate\
+      \ = packet_rate\n        self.seq_num = 0\n        self.packet_buffer = np.array([],\
+      \ dtype=np.uint8)\n        self.last_gen_time = 0\n        self.message_port_register_out(pmt.intern(\"\
+      packet_info\"))\n    \n    def _generate_packet(self, timestamp):\n        header\
+      \ = struct.pack('!BBIdd', 1, 0, self.seq_num, timestamp, 100.0)\n        payload\
+      \ = np.random.bytes(100)\n        packet = header + payload + struct.pack('!I',\
+      \ 0xDEADBEEF)\n        self.seq_num += 1\n        \n        meta = pmt.make_dict()\n\
+      \        meta = pmt.dict_add(meta, pmt.intern(\"seq_num\"), pmt.from_long(self.seq_num-1))\n\
+      \        self.message_port_pub(pmt.intern(\"packet_info\"), meta)\n        \n\
+      \        return packet\n    \n    def work(self, input_items, output_items):\n\
+      \        out = output_items[0]\n        current_time = self.nitems_written(0)\
+      \ / 1e6\n        \n        if self.last_gen_time == 0:\n            self.last_gen_time\
+      \ = current_time\n        \n        time_elapsed = current_time - self.last_gen_time\n\
+      \        packets_to_generate = int(time_elapsed * self.packet_rate)\n      \
+      \  \n        if packets_to_generate > 0 and len(self.packet_buffer) < len(out):\n\
+      \            for _ in range(min(packets_to_generate, 5)):\n                packet_bytes\
+      \ = self._generate_packet(current_time)\n                packet_array = np.frombuffer(packet_bytes,\
+      \ dtype=np.uint8)\n                packet_bits = np.unpackbits(packet_array)\n\
+      \                self.packet_buffer = np.append(self.packet_buffer, packet_bits)\n\
+      \            self.last_gen_time = current_time\n        \n        if len(self.packet_buffer)\
+      \ >= len(out):\n            out[:] = self.packet_buffer[:len(out)]\n       \
+      \     self.packet_buffer = self.packet_buffer[len(out):]\n            return\
+      \ len(out)\n        elif len(self.packet_buffer) > 0:\n            n = len(self.packet_buffer)\n\
+      \            out[:n] = self.packet_buffer\n            self.packet_buffer =\
+      \ np.array([], dtype=np.uint8)\n            return n\n        return 0\n"
+    affinity: ''
+    alias: ''
+    comment: Packet Generator
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    packet_rate: '100'
+  states:
+    _io_cache: ('packet_gen', 'blk', [('packet_rate', '100')], [], [('0', 'byte',
+      1), ('packet_info', 'message', 1)], '', ['packet_rate'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [40, 316]
+    rotation: 0
+    state: true
+- name: qtgui_const_sink
+  id: qtgui_const_sink_x
+  parameters:
+    affinity: ''
+    alias: ''
+    alpha1: '1.0'
+    alpha10: '1.0'
+    alpha2: '1.0'
+    alpha3: '1.0'
+    alpha4: '1.0'
+    alpha5: '1.0'
+    alpha6: '1.0'
+    alpha7: '1.0'
+    alpha8: '1.0'
+    alpha9: '1.0'
+    autoscale: 'False'
+    axislabels: 'True'
+    color1: '"blue"'
+    color10: '"dark blue"'
+    color2: '"red"'
+    color3: '"green"'
+    color4: '"black"'
+    color5: '"cyan"'
+    color6: '"magenta"'
+    color7: '"yellow"'
+    color8: '"dark red"'
+    color9: '"dark green"'
+    comment: ''
+    grid: 'True'
+    gui_hint: ''
+    label1: ''
+    label10: ''
+    label2: ''
+    label3: ''
+    label4: ''
+    label5: ''
+    label6: ''
+    label7: ''
+    label8: ''
+    label9: ''
+    legend: 'True'
+    marker1: '0'
+    marker10: '0'
+    marker2: '0'
+    marker3: '0'
+    marker4: '0'
+    marker5: '0'
+    marker6: '0'
+    marker7: '0'
+    marker8: '0'
+    marker9: '0'
+    name: '"Constellation"'
+    nconnections: '1'
+    size: '2048'
+    style1: '0'
+    style10: '0'
+    style2: '0'
+    style3: '0'
+    style4: '0'
+    style5: '0'
+    style6: '0'
+    style7: '0'
+    style8: '0'
+    style9: '0'
+    tr_chan: '0'
+    tr_level: '0.0'
+    tr_mode: qtgui.TRIG_MODE_FREE
+    tr_slope: qtgui.TRIG_SLOPE_POS
+    tr_tag: '""'
+    type: complex
+    update_time: '0.10'
+    width1: '1'
+    width10: '1'
+    width2: '1'
+    width3: '1'
+    width4: '1'
+    width5: '1'
+    width6: '1'
+    width7: '1'
+    width8: '1'
+    width9: '1'
+    xmax: '2'
+    xmin: '-2'
+    ymax: '2'
+    ymin: '-2'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [1096, 192.0]
+    rotation: 0
+    state: true
+- name: snippet_path
+  id: snippet
+  parameters:
+    alias: ''
+    code: sys.path.insert(0, '/home/arsewar/Documents/ee448')
+    comment: Add project directory to path
+    priority: '0'
+    section: main_after_init
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [8, 180]
+    rotation: 0
+    state: true
+
+connections:
+- [blocks_throttle, '0', digital_chunks_to_symbols, '0']
+- [channels_channel_model, '0', digital_constellation_decoder, '0']
+- [channels_channel_model, '0', qtgui_const_sink, '0']
+- [digital_chunks_to_symbols, '0', channels_channel_model, '0']
+- [digital_constellation_decoder, '0', blocks_file_sink, '0']
+- [packet_gen, '0', blocks_throttle, '0']
+- [packet_gen, packet_info, blocks_message_debug, print]
+
+metadata:
+  file_format: 1
+  grc_version: 3.10.12.0

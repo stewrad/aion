@@ -326,3 +326,24 @@ if __name__ == "__main__":
     print(f"   After FEC correction, packet should be valid again")
     
     print("\n=== Ready for FEC integration ===")
+
+    # ============================================================
+    # 6. Export generated packet stream to PCAP for Wireshark
+    # ============================================================
+    print("\n6. Writing packet stream to PCAP file (for Wireshark):")
+
+    from scapy.all import Ether, Raw, wrpcap
+
+    # Wrap each generated packet in a fake Ethernet frame
+    scapy_packets = []
+    for packet, meta in stream:
+        # Ether + Raw payload; Ethernet is just a dummy header for Wireshark compatibility
+        scapy_pkt = Ether() / Raw(packet)
+        scapy_packets.append(scapy_pkt)
+
+    # Save to file
+    pcap_filename = "acm_generated_packets.pcap"
+    wrpcap(pcap_filename, scapy_packets)
+    print(f"   ✅ Saved {len(scapy_packets)} packets to '{pcap_filename}'")
+
+    print("\nYou can now open this file in Wireshark to inspect packet contents.")
