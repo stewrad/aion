@@ -332,13 +332,13 @@ if __name__ == "__main__":
     # ============================================================
     print("\n6. Writing packet stream to PCAP file (for Wireshark):")
 
-    from scapy.all import Ether, Raw, wrpcap
+    from scapy.all import Ether, Raw, wrpcap, IP, UDP
 
     # Wrap each generated packet in a fake Ethernet frame
     scapy_packets = []
     for packet, meta in stream:
         # Ether + Raw payload; Ethernet is just a dummy header for Wireshark compatibility
-        scapy_pkt = Ether() / Raw(packet)
+        scapy_pkt = Ether() / IP(src="192.168.0.1", dst="192.168.0.2") / UDP(sport=5000, dport=6000) / Raw(packet)
         scapy_packets.append(scapy_pkt)
 
     # Save to file
