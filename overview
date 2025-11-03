@@ -1,0 +1,105 @@
+# ACM Simulated Transmitter — Theoretical and Implementation Notes
+
+## 1. Overview
+This document outlines the logical and signal-processing chain for an Adaptive Coding and Modulation (ACM) transmitter simulation (DVB-S2 style).  
+It details each step from packet generation → modulation → transmission, including FEC, pilots, RRC filtering, and adaptive MCS switching.
+
+---
+
+## 2. High-Level Pipeline
+
+| Stage | Description | Key Notes |
+|--------|--------------|-----------|
+| 1. Packet Generation | Generate data with Ethernet/IP/UDP headers and CRC. | Creates frames for delivery; CRC ensures integrity. |
+| 2. Segmentation & Framing | Break payloads into PHY frames sized for FEC. Add PHY header (length, MCS, seq num). | PHY header is robustly encoded. |
+| 3. Scrambling (optional) | XOR with PRBS to remove long runs of zeros/ones. | Helps timing/equalizer convergence. |
+| 4. FEC Encoding | Apply chosen code (LDPC, Turbo, BCH, etc.). | ACM means modulation + code rate vary per frame. |
+| 5. Bit Interleaving | Spread burst errors into random ones for FEC recovery. | Interleaver depth matches expected channel burstiness. |
+| 6. Pilot & Preamble Insertion | Add start-of-frame (SoF) and pilot symbols. | Used for sync, CFO estimation, channel tracking. |
+| 7. Symbol Mapping (Modulation) | Map bits → symbols (BPSK, QPSK, 8/16/32APSK). | Use proper Gray mapping; payload MCS-dependent. |
+| 8. Pulse Shaping (RRC) | Upsample and convolve with Root Raised Cosine filter. | Bandwidth control, ISI minimization. |
+| 9. Frame Combination | Merge preamble, pilots, and payload symbols. | Produces full baseband frame. |
+| 10. Upconversion | Shift to desired carrier (complex exponential). | Set carrier frequency, apply DAC rate matching. |
+| 11. RF Impairments (Simulation) | Add AWGN, phase noise, fading, nonlinearity. | Essential for realistic ACM performance. |
+| 12. Transmission | Send to channel or SDR sink. | In hardware: HackRF/USRP; in sim: channel model. |
+
+---
+
+## 3. Receiver + ACM Feedback Loop
+
+1. **Receiver performs:**
+   - Synchronization (timing & frequency)
+   - Channel estimation (using pilots/preamble)
+   - Soft demapping (LLRs)
+   - FEC decoding
+   - CRC verification
+
+2. **Metrics Computed:**
+   - SNR, EVM, PER, BER, throughput
+
+3. **ACM Decision Process:**
+   - Receiver estimates link quality → sends feedback
+   - Transmitter chooses next-frame MCS from a table based on thresholds
+   - Include hysteresis to prevent MCS oscillation
+
+---
+
+## 4. Design Considerations
+
+### PHY Header Robustness
+- Encode with a lower-rate code or simpler modulation (e.g., QPSK).
+- Receiver must decode header even at low SNR.
+
+### Pilot Design
+- Density based on channel coherence time and Doppler.
+- In-band or separate subcarriers (for OFDM).
+- Pilots are known symbols for phase and gain tracking.
+
+### Preamble
+- Long autocorrelation-friendly sequences (e.g. Zadoff-Chu, CAZAC).
+- Used for timing and frequency synchronization.
+
+### RRC Filtering
+- TX and RX use matched RRC filters.
+- Roll-off factor (α) controls spectral efficiency and ISI.
+- Filter span: typically 6–10 symbols.
+
+### Symbol Timing & CFO Recovery
+- Algorithms: Gardner or Mueller-Muller (timing); correlation or preamble-based (CFO).
+- Essential for higher-order APSK constellations.
+
+### Soft Demapping
+- Output Log-Likelihood Ratios (LLRs) for LDPC/Turbo decoding.
+- Critical for optimal FEC performance.
+
+### Nonlinearities
+- Include AM/AM and AM/PM effects for APSK.
+- Back-off reduces distortion; use Saleh or Rapp model in simulation.
+
+### Mapping
+- Gray mapping for BPSK/QPSK.
+- Optimized mapping for APSK (DVB-S2 standard).
+
+### Rate Adaptation Policy
+- Choose highest MCS whose PER < target (e.g., 10⁻³).
+- Use moving-average SNR to smooth adaptation.
+- Implement hysteresis to avoid flapping between modes.
+
+---
+
+## 5. Metrics to Measure
+
+| Metric | Description |
+|---------|--------------|
+| PER | Packet Error Rate vs. SNR |
+| BER | Bit Error Rate (pre/post FEC) |
+| Throughput | Bits/sec successfully received |
+| EVM | Error Vector Magnitude for modulation quality |
+| Constellation/Eye Diagrams | Visual debug of modulation accuracy |
+| MCS Switch Stability | How often the ACM state changes |
+
+---
+
+## 6. Key Equations
+
+- **Symbol Rate:**

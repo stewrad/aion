@@ -1,0 +1,12 @@
+simulation:
+  num_packets: 10000
+  snr_range: [0, 20]
+  feedback_delay: 2  # frames
+
+acm:
+  mcs_options:
+    - {mod: BPSK,  fec_rate: 1/2}
+    - {mod: QPSK,  fec_rate: 3/4}
+    - {mod: 16QAM, fec_rate: 1/2}
+    - {mod: 16QAM, fec_rate: 3/4}
+
