@@ -65,7 +65,7 @@ print(f'Pilots: {pilot_seq}')
 print(f'Scrambled Pilots: {pilots_scrambled}')
 
 # MCS Indices
-# Generate Walsh codes for 8 sequences
+# Generate Walsh codes for 16 sequences
 N = 16
 H = hadamard_matrix(N)
 walsh_codes = H  # Each row is a Walsh code of length N
