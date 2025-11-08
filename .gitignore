@@ -25,3 +25,5 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Docker 
+acm_docker/*

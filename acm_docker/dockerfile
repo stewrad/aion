@@ -1,0 +1,35 @@
+# Base image
+FROM nvcr.io/nvidia/tensorflow:25.02-tf2-py3
+
+# Set working directory
+WORKDIR /workspace
+
+# Install system dependencies, GNU Radio, UHD, HackRF
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gnuradio \
+        gnuradio-dev \
+        gr-osmosdr \
+        python3-pyqt5 \
+        qt5-qmake \
+        qtbase5-dev \
+        python3-pip \
+        git \
+        wget \
+        ca-certificates \
+        libuhd-dev \
+        uhd-host \
+        hackrf \
+        libhackrf-dev \
+        hackrf-tools \
+        usbutils \
+        && rm -rf /var/lib/apt/lists/*
+
+# Upgrade pip and install Python packages
+RUN pip install --upgrade pip setuptools wheel \
+    && pip install sionna numpy scipy matplotlib jupyterlab
+
+# Expose Jupyter port
+EXPOSE 8888
+
+# Default command
+CMD ["bash"]
