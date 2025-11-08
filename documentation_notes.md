@@ -49,6 +49,12 @@ Supported code rates (and corresponding K):
   Rate: 8/9  → K = 57600 / 14400
   Rate: 9/10 → K = 58320 / 14580
 
+### IMPORTANT TO NOTE: 
+- I decided to utilize short frame (N=16200) to reduce computational load on my simulation. This means I can no longer use 9/10 code rate. See full mcs_table below: 
+
+```python
+
+
 
 
 LDPC Framing Steps:
