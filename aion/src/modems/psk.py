@@ -16,7 +16,7 @@ def bpsk_gen(
     sample_rate: float=2.0,
     symbol_rate: float=1.0,
     taps: int=21,
-    rolloff: float=0.25,
+    rolloff: float=0.35,
     rng: Optional[np.random.Generator] = None,
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     '''
@@ -109,7 +109,7 @@ def qpsk_gen(
     sample_rate: float=2.0,
     symbol_rate: float=1.0,
     taps: int=21,
-    rolloff: float=0.25,
+    rolloff: float=0.35,
     rng: Optional[np.random.Generator] = None,
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     '''
@@ -214,7 +214,7 @@ def psk8_gen(
     sample_rate: float=2.0,
     symbol_rate: float=1.0,
     taps: int=21,
-    rolloff: float=0.25,
+    rolloff: float=0.35,
     rng: Optional[np.random.Generator] = None,
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     '''
@@ -309,7 +309,7 @@ def pi2bpsk_gen(
     sample_rate: float=2.0,
     symbol_rate: float=1.0,
     taps: int=21,
-    rolloff: float=0.25,
+    rolloff: float=0.35,
     rng: Optional[np.random.Generator] = None,
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     '''
@@ -398,7 +398,7 @@ def pi4qpsk_gen(
     sample_rate: float=2.0,
     symbol_rate: float=1.0,
     taps: int=21,
-    rolloff: float=0.25,
+    rolloff: float=0.35,
     rng: Optional[np.random.Generator] = None,
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     '''
@@ -498,7 +498,7 @@ def sqpsk_gen(
     sample_rate: float=2.0,
     symbol_rate: float=1.0,
     taps: int=21,
-    rolloff: float=0.25,
+    rolloff: float=0.35,
     rng: Optional[np.random.Generator] = None,
 ) -> Tuple[np.ndarray, np.ndarray, float]:
     '''
