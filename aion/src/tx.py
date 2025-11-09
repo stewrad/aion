@@ -44,33 +44,33 @@ def suppress_output():
 # ================================
 MCS_TABLE = [
     # QPSK
-    {'name':'QPSK-1/4',   'mod':'QPSK',  'code_rate':1/4, 'snr':0.5},
-    {'name':'QPSK-1/3',   'mod':'QPSK',  'code_rate':1/3, 'snr':0.8},
-    {'name':'QPSK-2/5',   'mod':'QPSK',  'code_rate':2/5, 'snr':1.1},
-    {'name':'QPSK-1/2',   'mod':'QPSK',  'code_rate':1/2, 'snr':1.5},
-    {'name':'QPSK-3/5',   'mod':'QPSK',  'code_rate':3/5, 'snr':1.8},
-    {'name':'QPSK-2/3',   'mod':'QPSK',  'code_rate':2/3, 'snr':2.1},
-    {'name':'QPSK-3/4',   'mod':'QPSK',  'code_rate':3/4, 'snr':2.5},
-    {'name':'QPSK-4/5',   'mod':'QPSK',  'code_rate':4/5, 'snr':2.8},
-    {'name':'QPSK-5/6',   'mod':'QPSK',  'code_rate':5/6, 'snr':3.0},
-    {'name':'QPSK-8/9',   'mod':'QPSK',  'code_rate':8/9, 'snr':3.5},
+    {'name':'QPSK-1/4',   'mod':'QPSK', 'code_rate':1/4, 'snr':0.5},
+    {'name':'QPSK-1/3',   'mod':'QPSK', 'code_rate':1/3, 'snr':0.8},
+    {'name':'QPSK-2/5',   'mod':'QPSK', 'code_rate':2/5, 'snr':1.1},
+    {'name':'QPSK-1/2',   'mod':'QPSK', 'code_rate':1/2, 'snr':1.5},
+    {'name':'QPSK-3/5',   'mod':'QPSK', 'code_rate':3/5, 'snr':1.8},
+    {'name':'QPSK-2/3',   'mod':'QPSK', 'code_rate':2/3, 'snr':2.1},
+    {'name':'QPSK-3/4',   'mod':'QPSK', 'code_rate':3/4, 'snr':2.5},
+    {'name':'QPSK-4/5',   'mod':'QPSK', 'code_rate':4/5, 'snr':2.8},
+    {'name':'QPSK-5/6',   'mod':'QPSK', 'code_rate':5/6, 'snr':3.0},
+    {'name':'QPSK-8/9',   'mod':'QPSK', 'code_rate':8/9, 'snr':3.5},
     # 8APSK
-    {'name':'8APSK-3/5',  'mod':'8APSK','code_rate':3/5, 'snr':4.5},
-    {'name':'8APSK-2/3',  'mod':'8APSK','code_rate':2/3, 'snr':5.0},
-    {'name':'8APSK-3/4',  'mod':'8APSK','code_rate':3/4, 'snr':5.5},
-    {'name':'8APSK-5/6',  'mod':'8APSK','code_rate':5/6, 'snr':6.0},
-    {'name':'8APSK-8/9',  'mod':'8APSK','code_rate':8/9, 'snr':6.5},
+    {'name':'8APSK-3/5',  'mod':'8PSK', 'code_rate':3/5, 'snr':4.5},
+    {'name':'8APSK-2/3',  'mod':'8PSK', 'code_rate':2/3, 'snr':5.0},
+    {'name':'8APSK-3/4',  'mod':'8PSK', 'code_rate':3/4, 'snr':5.5},
+    {'name':'8APSK-5/6',  'mod':'8PSK', 'code_rate':5/6, 'snr':6.0},
+    {'name':'8APSK-8/9',  'mod':'8PSK', 'code_rate':8/9, 'snr':6.5},
     # 16APSK
-    {'name':'16APSK-2/3', 'mod':'16APSK','code_rate':2/3,'snr':7.5},
-    {'name':'16APSK-3/4', 'mod':'16APSK','code_rate':3/4,'snr':8.0},
-    {'name':'16APSK-4/5', 'mod':'16APSK','code_rate':4/5,'snr':8.5},
-    {'name':'16APSK-5/6', 'mod':'16APSK','code_rate':5/6,'snr':9.0},
-    {'name':'16APSK-8/9', 'mod':'16APSK','code_rate':8/9,'snr':9.5},
+    {'name':'16APSK-2/3', 'mod':'16APSK', 'code_rate':2/3, 'snr':7.5},
+    {'name':'16APSK-3/4', 'mod':'16APSK', 'code_rate':3/4, 'snr':8.0},
+    {'name':'16APSK-4/5', 'mod':'16APSK', 'code_rate':4/5, 'snr':8.5},
+    {'name':'16APSK-5/6', 'mod':'16APSK', 'code_rate':5/6, 'snr':9.0},
+    {'name':'16APSK-8/9', 'mod':'16APSK', 'code_rate':8/9, 'snr':9.5},
     # 32APSK
-    {'name':'32APSK-3/4','mod':'32APSK','code_rate':3/4,'snr':11.0},
-    {'name':'32APSK-4/5','mod':'32APSK','code_rate':4/5,'snr':11.5},
-    {'name':'32APSK-5/6','mod':'32APSK','code_rate':5/6,'snr':12.0},
-    {'name':'32APSK-8/9','mod':'32APSK','code_rate':8/9,'snr':12.5},
+    {'name':'32APSK-3/4', 'mod':'32APSK', 'code_rate':3/4, 'snr':11.0},
+    {'name':'32APSK-4/5', 'mod':'32APSK', 'code_rate':4/5, 'snr':11.5},
+    {'name':'32APSK-5/6', 'mod':'32APSK', 'code_rate':5/6, 'snr':12.0},
+    {'name':'32APSK-8/9', 'mod':'32APSK', 'code_rate':8/9, 'snr':12.5},
 ]
 
 MCS_LOOKUP = {entry['name']: entry for entry in MCS_TABLE}
@@ -89,9 +89,11 @@ ALIST_MAP = {
 }
 
 MOD_MAP = {
-    "bpsk": psk.bpsk_gen,
-    "qpsk": psk.qpsk_gen,
-    "8psk": psk.psk8_gen,
+    "BPSK": psk.bpsk_gen,
+    "QPSK": psk.qpsk_gen,
+    "8PSK": psk.psk8_gen,
+    "16APSK": psk.qpsk_gen,
+    "32APSK": psk.qpsk_gen,
     "pi2bpsk": psk.pi2bpsk_gen,
 }
 
@@ -116,6 +118,7 @@ def TX_init(meta):
     bitstream = generate_bitstream_from_packets(NUM_PACKETS)
     print(f"Total bitstream length: {len(bitstream)} bits\n")
 
+    mod_data = []
     # snr = meta['SNR_VALUES'][0]
     for snr in meta['SNR_VALUES']:
         print(f"\n--- SNR = {snr:.1f} dB ---")
@@ -155,17 +158,25 @@ def TX_init(meta):
             encoded_frames.append(codeword)
 
         print(f"Encoded {len(encoded_frames)} codewords (total {len(encoded_frames) * N} bits).")
-        print(f'Modulation bits: {codeword[:10]}')
-        print(f'Codeword type: {type(codeword)}, Size: {len(codeword)}')
+        # print(f'Modulation bits: {codeword[:10]}')
+        # print(f'Codeword type: {type(codeword)}, Size: {len(codeword)}')
 
+        Rs = 1000
+        Fs = 4000
+        mod_func = MOD_MAP[mod_type]
+        _, bb, _, bw, sps = mod_func(codeword, symbol_rate=Rs, sample_rate=Fs)
         
+        print(f'Modulated {len(bb)} Symbols as {mod_type}')
 
-    print("Encoded bits ready for modulation stage.")
+        mod_data.append(bb)
+        # np.append(mod_data, bb)
 
+    mod_data = np.concatenate(mod_data)
+    print(f"\nTotal Modulated Symbols: {mod_data.size}")
 
     print("\n=== ACM Simulation Complete ===")
 
-    return
+    return mod_data 
 
 # High-resolution (nanosecond prec) to benchmark TX init process 
 def timing(meta):
@@ -209,7 +220,7 @@ def main():
     ALIST_FILE = "alist/dvbs2_1_2_N16200.alist"
 
     meta = {
-        'NUM_PACKETS': 100, 
+        'NUM_PACKETS': 10, 
         'SNR_VALUES': [1.0, 3.0, 6.0, 9.0, 12.0],  # simulate changing link conditions, 
         'N_LDPC': 16200, 
         'ALIST_FILE': "alist/dvbs2_1_2_N16200.alist",
@@ -220,25 +231,4 @@ def main():
 # Generate simulated data RF files and simulated human annotated tags
 if __name__ == "__main__":
     main()
-
-
-# class TXFlowgraph(gr.top_block):
-#     def __init__(self, mcs):
-#         gr.top_block.__init__(self)
-#         mod = {
-#             'BPSK': digital.psk.psk_mod(2),
-#             'QPSK': digital.psk.psk_mod(4),
-#             '16QAM': digital.qam.qam_mod(16)
-#         }[mcs['mod']]
-        
-#         # Use FEC Encoder
-#         enc = fec.encoder(encoder_obj_list=fec.cc_encoder_make(7, 2, 3))
-        
-#         self.src = blocks.vector_source_b([])
-#         self.enc = fec.encoder(enc)
-#         self.mod = mod
-#         self.throttle = blocks.throttle(gr.sizeof_gr_complex, 32000)
-#         self.snk = blocks.vector_sink_c()
-        
-#         self.connect(self.src, self.enc, self.mod, self.throttle, self.snk)
 
