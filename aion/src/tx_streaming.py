@@ -104,6 +104,31 @@ MOD_MAP = {
     "pi2bpsk": psk.pi2bpsk_gen,
 }
 
+# Streaming through GNU Radio 
+import zmq
+
+def stream_to_gnuradio(samples, socket, Fs: float=32000):
+    """
+    Streams complex64 IQ samples over ZeroMQ PUB socket to GNU Radio
+    """
+    # Normalize to prevent overflow
+    samples = samples / np.max(np.abs(samples))
+
+    # Convert to complex64 for GNU Radio
+    iq_bytes = samples.astype(np.complex64).tobytes()
+
+    # Simple single-burst send (or wrap in a loop if you want continuous replay)
+    socket.send(iq_bytes)
+    print(f"Sent {len(samples)} samples ({len(iq_bytes)} bytes)")
+    time.sleep(len(samples)/Fs) #+ np.random.uniform(0.0, 0.1))
+
+    # # Continuous replay
+    # while True:
+    #     print(f"Sending {len(samples)} samples")
+    #     socket.send(iq_bytes)
+    #     time.sleep(len(samples) / Fs)  # approximate real-time pacing
+
+
 def select_mcs_for_snr(snr_db: float):
     """
     Adaptive MCS selection based on SNR thresholds.
@@ -159,6 +184,13 @@ def TX_init(
     mcs_walsh: np.ndarray,
     pilot_sym: np.ndarray
 ):
+    addr = meta['stream_addr']
+    # Initialize stream to GNU Radio 
+    ctx = zmq.Context()
+    socket = ctx.socket(zmq.PUB)
+    socket.bind(addr)
+    print(f"Streaming to GNU Radio on {addr} ...")
+
     # Set short frame N bit value for each codword 
     N_LDPC = int(meta['N_LDPC'])
     # Set symbol rate and sample rate 
@@ -173,75 +205,93 @@ def TX_init(
     bitstream = generate_bitstream_from_packets(NUM_PACKETS)
     print(f"Total bitstream length: {len(bitstream)} bits\n")
 
+    # # Continouous streaming, send pre-transmission
+    # idle_time = np.random.uniform(0.5, 1.0) # 50-200ms gap
+    # noise_fill = np.random.normal(0, 0.01, len(np.arange(0,1000))).astype(np.complex64)
+    # socket.send(noise_fill.tobytes())
+    # time.sleep(idle_time)
+
     mod_data = []
     symbol_frame = []
     # snr = meta['SNR_VALUES'][0]
-    for snr in meta['SNR_VALUES']:
-        print(f"\n--- SNR = {snr:.1f} dB ---")
+    while True:
+        for snr in meta['SNR_VALUES']:
+            print(f"\n--- SNR = {snr:.1f} dB ---")
 
-        # Step 3: Select MCS for this SNR
-        mcs_name = select_mcs_for_snr(snr)
-        mcs_entry = MCS_LOOKUP[mcs_name]
-        code_rate = mcs_entry['code_rate']
-        mod_type = mcs_entry['mod']
-        mcs_idx = mcs_entry['idx']
+            # Step 3: Select MCS for this SNR
+            mcs_name = select_mcs_for_snr(snr)
+            mcs_entry = MCS_LOOKUP[mcs_name]
+            code_rate = mcs_entry['code_rate']
+            mod_type = mcs_entry['mod']
+            mcs_idx = mcs_entry['idx']
 
-        print(f"Selected MCS: {mcs_name} ({mod_type}, R={code_rate:.3f})")
+            print(f"Selected MCS: {mcs_name} ({mod_type}, R={code_rate:.3f})")
 
-        # Step 4: Segment bits
-        # N_LDPC = int(meta['N_LDPC'])
-        segments, meta = segment_bits(bitstream, [mcs_name])
-        print(f"Generated {len(segments)} frames with K≈{int(round(N_LDPC * code_rate))} bits each.")
+            # Step 4: Segment bits
+            # N_LDPC = int(meta['N_LDPC'])
+            segments, meta = segment_bits(bitstream, [mcs_name])
+            print(f"Generated {len(segments)} frames with K≈{int(round(N_LDPC * code_rate))} bits each.")
 
-        # Step 5: Encode each frame using LDPC
-        # Load LDPC parity-check matrix 
-        ALIST_FILE = ALIST_MAP[code_rate]
-        # Load LDPC parity-check matrix
-        with suppress_output():
-            alist = utils.load_alist(ALIST_FILE)
-            H_dense, _, N, _ = utils.alist2mat(alist)
-            M = H_dense.shape[0]
-            K = N - M
-            H_sparse = sp.csr_matrix(H_dense, dtype=np.uint8)
-            G = compute_generator_matrix(H_dense)
+            # Step 5: Encode each frame using LDPC
+            # Load LDPC parity-check matrix 
+            ALIST_FILE = ALIST_MAP[code_rate]
+            # Load LDPC parity-check matrix
+            with suppress_output():
+                alist = utils.load_alist(ALIST_FILE)
+                H_dense, _, N, _ = utils.alist2mat(alist)
+                M = H_dense.shape[0]
+                K = N - M
+                H_sparse = sp.csr_matrix(H_dense, dtype=np.uint8)
+                G = compute_generator_matrix(H_dense)
 
-        encoded_frames = []
-        for i, frame_bits in enumerate(segments):
-            # Pad/truncate to match generator size K
-            input_bits = frame_bits[:K] if len(frame_bits) >= K else np.concatenate(
-                [frame_bits, np.zeros(K - len(frame_bits), dtype=np.uint8)]
-            )
-            codeword = (input_bits @ G % 2).astype(np.uint8)
-            encoded_frames.append(codeword)
+            encoded_frames = []
+            for i, frame_bits in enumerate(segments):
+                # Pad/truncate to match generator size K
+                input_bits = frame_bits[:K] if len(frame_bits) >= K else np.concatenate(
+                    [frame_bits, np.zeros(K - len(frame_bits), dtype=np.uint8)]
+                )
+                codeword = (input_bits @ G % 2).astype(np.uint8)
+                encoded_frames.append(codeword)
 
-        print(f"Encoded {len(encoded_frames)} codewords (total {len(encoded_frames) * N} bits).")
-        # print(f'Modulation bits: {codeword[:10]}')
-        # print(f'Codeword type: {type(codeword)}, Size: {len(codeword)}')
+            print(f"Encoded {len(encoded_frames)} codewords (total {len(encoded_frames) * N} bits).")
+            # print(f'Modulation bits: {codeword[:10]}')
+            # print(f'Codeword type: {type(codeword)}, Size: {len(codeword)}')
 
-        mod_func = MOD_MAP[mod_type]
-        _, bb, _, bw, sps = mod_func(codeword, symbol_rate=Rs, sample_rate=Fs)
-        print(f'Modulated {len(bb)} Symbols as {mod_type}')
+            mod_func = MOD_MAP[mod_type]
+            _, bb, _, bw, sps = mod_func(codeword, symbol_rate=Rs, sample_rate=Fs)
+            print(f'Modulated {len(bb)} Symbols as {mod_type}')
 
-        bb_w_pilot = insert_pilots(bb, pilot_sym, data_block=1440, pilot_block=36)
+            bb_w_pilot = insert_pilots(bb, pilot_sym, data_block=1440, pilot_block=36)
 
-        _, mcs_sym, _, _, _ = plh_mod(mcs_walsh[:, mcs_idx], Rs, Fs)
+            _, mcs_sym, _, _, _ = plh_mod(mcs_walsh[:, mcs_idx], Rs, Fs)
 
-        # mod_data.append(mcs_sym, bb)
-        symbol_frame = np.concatenate([sof, mcs_sym, bb_w_pilot])
-        mod_data.append(symbol_frame)
+            # mod_data.append(mcs_sym, bb)
+            symbol_frame = np.concatenate([sof, mcs_sym, bb_w_pilot])
+            mod_data.append(symbol_frame)
 
-        print(f'Combined {len(sof)} SoF symbols + {len(mcs_sym)} MCS symbols + {len(bb_w_pilot)} Data w/ Pilot symbols.')
+            print(f'Combined {len(sof)} SoF symbols + {len(mcs_sym)} MCS symbols + {len(bb_w_pilot)} Data w/ Pilot symbols.')
 
-        # # Plotting tests for noisy cbr signal 
-        # noisy_bb = awgn.awgn_gen(bb, snr)
-        # sig_plot.plot_all(noisy_bb, Fs, Rs, sps)
+            # # Plotting tests for noisy cbr signal 
+            noisy_bb = awgn.awgn_gen(symbol_frame, snr)
+            # sig_plot.plot_all(noisy_bb, Fs, Rs, sps)
 
-    mod_data = np.concatenate(mod_data)
-    print(f"\nTotal Modulated Symbols: {mod_data.size}")
+            # Testing continuous streaming with AWGN channel: 
+            socket.send(noisy_bb.astype(np.complex64).tobytes())
+            time.sleep(len(noisy_bb)/Fs)
 
-    print("\n=== ACM Simulation Complete ===")
+            idle_time = np.random.uniform(0.05, 0.2) # 50-200ms gap
+            noise_fill = np.random.normal(0, 0.01, len(symbol_frame)).astype(np.complex64)
+            socket.send(noise_fill.tobytes())
+            time.sleep(idle_time)
 
-    return mod_data
+            # stream_to_gnuradio(noisy_bb, socket, Fs=Fs)
+
+        # mod_data = np.concatenate(mod_data)
+        # print(f"\nTotal Modulated Symbols: {mod_data.size}")
+
+        print("\n=== ACM Simulation Complete ===")
+
+        # return mod_data
 
 # High-resolution (nanosecond prec) to benchmark TX init process 
 def timing(
@@ -252,7 +302,6 @@ def timing(
 ):
     start = time.perf_counter()
 
-    # Simulate processing
     TX_init(meta, sof, mcs_walsh, pilot_sym)
 
     elapsed = time.perf_counter() - start
@@ -284,7 +333,7 @@ def main():
     # ================================
     # Configuration
     # ================================
-    NUM_PACKETS = 13
+    NUM_PACKETS = 150
     SNR_VALUES = [1.0, 3.0, 6.0, 9.0, 12.0]  # simulate changing link conditions
     N_LDPC = 16200
 
@@ -293,7 +342,8 @@ def main():
         'SNR_VALUES': [1.0, 3.0, 6.0, 9.0, 12.0],  # simulate changing link conditions, 
         'N_LDPC': 16200, 
         'Rs': 1000,
-        'Fs': 4000
+        'Fs': 4000,
+        'stream_addr': 'tcp://0.0.0.0:5555'
         }
 
     sof_seq = sof_gen()
@@ -305,7 +355,13 @@ def main():
 
     print(f'Shape Pilots: {np.shape(pilot_sym)}')
 
+    # Simulate 1 run with timing benchmark 
     timing(meta, sof, mcs_walsh, pilot_sym)
+
+    # # Simulate processing
+    # mod_data = TX_init(meta, sof, mcs_walsh, pilot_sym)
+
+    # stream_to_gnuradio(mod_data, Fs=meta['Fs'])
 
 # Generate simulated data RF files and simulated human annotated tags
 if __name__ == "__main__":

@@ -80,21 +80,21 @@ def mcs_walsh_gen(
     return mcs_scrambled[:24]
 
 def pilot_gen():
-    # pilot scrambler sequence 
-    pls1_seed = [1,1,0,0,0,1]
-    pls1_taps = [5,1]
-    pilot_pls = lfsr(pls1_seed, pls1_taps, 63)
+    # # pilot scrambler sequence 
+    # pls1_seed = [1,1,0,0,0,1]
+    # pls1_taps = [5,1]
+    # pilot_pls = lfsr(pls1_seed, pls1_taps, 63)
     # pilot sequence: length 64 bits, LFSR of length 6 
     pilot_seed = [1,1,0,1,0,1]
     pilot_taps = [5,0]
     pilot_seq = lfsr(pilot_seed, pilot_taps, 63)
-    pilots_scrambled = pilot_seq * pilot_pls
-    # print(f'Pilot PLS: {pilot_pls}')
-    print(f'Pilots: {pilot_seq}')
-    # print(f'Scrambled Pilots: {pilots_scrambled}')
-    print(f'Scrambled Pilots (to keep): {pilots_scrambled[:36]}')
+    # pilots_scrambled = pilot_seq * pilot_pls
+    # # print(f'Pilot PLS: {pilot_pls}')
+    # print(f'Pilots: {pilot_seq}')
+    # # print(f'Scrambled Pilots: {pilots_scrambled}')
+    # print(f'Scrambled Pilots (to keep): {pilots_scrambled[:36]}')
 
-    return pilots_scrambled[:36]
+    return pilot_seq[:36]
 
 def plh_mod(
     symbols: np.ndarray,

@@ -15,6 +15,29 @@ docker run -it --rm \
 - `p 8888:8888` maps Jupyter or web ports
 - `sionna_gpu_env` is name of the image
 
+### Run the container with port access, all GPUs
+
+```zsh
+docker run -it --rm \
+    --gpus all \
+    --ipc=host \
+    --ulimit memlock=-1 \
+    --ulimit stack=67108864 \
+    --network host \
+    --privileged \
+    -p 5555:5555 \
+    -e DISPLAY=$DISPLAY \
+    -v /tmp/.X11-unix:/tmp/.X11-unix:rw \
+    -v $(pwd):/workspace \
+    acm_sim_env-gr2
+```
+- for this, also run the following to ensure GTK for GNURadio-companion
+```zsh
+apt update
+apt install -y python3-gi gir1.2-gtk-3.0 libgtk-3-dev \
+               libglib2.0-dev glib-networking
+```
+
 Run in the background:
 ```zsh
 docker run -d --name sionna_container sionna_gpu_env
