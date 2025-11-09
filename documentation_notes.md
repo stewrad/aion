@@ -49,38 +49,33 @@ Supported code rates (and corresponding K):
   Rate: 8/9  → K = 57600 / 14400
   Rate: 9/10 → K = 58320 / 14580
 
-### IMPORTANT TO NOTE: 
+## IMPORTANT TO NOTE: 
 - I decided to utilize short frame (N=16200) to reduce computational load on my simulation. This means I can no longer use 9/10 code rate. See full mcs_table below: 
 
-```python
-
-
-
-
-LDPC Framing Steps:
-1. Collection application/transport packets -> output bit array
-2. Create PHY Header
-    - SoF from SRG LFSR
-        - unscrambled
-    - Pilots from SRG LFSR
-        - SRG LFSR scrambler
-    - MCS Indices as Walsh codes
-        - SRG LFSR scrambler 
-3. Segment for LDPC: 
-    - Choose the code rate (r) and K based on MCS
-    - segment PHY frame into chunks of K bits
-    - IF final segment < K, pad with 0s
-4. LDPC encode each segment
-    - each segment -> encoded to N bits
-5. Combine encoded frames (e.g. time multiplex several per burst)
-    - Optionally bit interleave
-6. Map bits to modulation symbols
-7. Insert modulated pilots/MCS index/SoF symbols 
-    - pilots every 16 symbols
-        - pilot density can be determined by MCS as well, e.g. 1p per 32d for QPSK or 1p per 16d for 16APSK
-    - Optionally apply PLS here 
-8. Apply RRC filter, upsample, apply DC offset 
-9. Transmit on SDR, here F_c is applied by SDR
+## LDPC Framing Steps:
+#### 1. Collection application/transport packets -> output bit array
+#### 2. Create PHY Header
+- SoF from SRG LFSR
+    - unscrambled
+- Pilots from SRG LFSR
+    - SRG LFSR scrambler
+- MCS Indices as Walsh codes
+    - SRG LFSR scrambler 
+#### 3. Segment for LDPC: 
+- Choose the code rate (r) and K based on MCS
+- segment PHY frame into chunks of K bits
+- IF final segment < K, pad with 0s
+#### 4. LDPC encode each segment
+- each segment -> encoded to N bits
+#### 5. Combine encoded frames (e.g. time multiplex several per burst)
+- Optionally bit interleave
+#### 6. Map bits to modulation symbols
+#### 7. Insert modulated pilots/MCS index/SoF symbols 
+- pilots every 16 symbols
+    - pilot density can be determined by MCS as well, e.g. 1p per 32d for QPSK or 1p per 16d for 16APSK
+- Optionally apply PLS here 
+#### 8. Apply RRC filter, upsample, apply DC offset 
+#### 9. Transmit on SDR, here F_c is applied by SDR
 
 
 Integration with GNU Radio FEC Encoding:
@@ -109,7 +104,7 @@ Implement a ACM controller block that
 - updates FEC encoder and modulation mapper configuration dynamically 
 
 
-#### Start of Frame and Pilot Symbol Pseudorandom Sequences:
+## Start of Frame and Pilot Symbol Pseudorandom Sequences:
 1. Linear Feedback Shift Register (LFSR) 
     - generate a maximal-length pseudorandom sequence (m-sequence) 
 2. Gold or Kasami Sequences
@@ -146,7 +141,7 @@ Interspersing SoF:
 phy_frame_symbols = np.concatenate([sof_symbols, header_symbols, tx_symbols])
 ```
 
-### Encoding MCS Indices: 
+## Encoding MCS Indices: 
 1. Direct binary encoding + CRC
     - Map MCS index to binary, e.g. 5 MCS levels -> 3 bits
     - optionally append 1-2 bit CRC
@@ -173,7 +168,7 @@ Receiver decoding:
 3. If orthogonal/Walsh codes -> correlate with all possible codes, pick maximum\
 4. Rx now knows **modulation order, LDPC code rate, pilot interval, etc.**
 
-### Walsh Code Generation 
+## Walsh Code Generation 
 **Walsh codes** are derived from **Hadamard matrices**, which are square matrices with entries $\pm$1 and mutually orthogonal rows
 - for **size N**, you get N orthogonal codes of length **N**
 - N must be a power of 2: 2,4,8,16,...
@@ -249,7 +244,7 @@ taps = [6,5]  # zero-based indexing
 sequence = lfsr(seed, taps, 127)  # maximal length 2^7-1 = 127
 sequence = 2*sequence - 1  # map 0->-1, 1->1 for BPSK
 ```
-### Why to Scramble:
+## Why to Scramble:
 1. Improve spectral flatness (spectral shaping) 
     - transmitting long sequences of zeros or ones and structured payloads can cause long runs of the same symbol or create spectral spikes, or DC bias, in the transmitted signal
     - scrambling evenly distributes power across frequencies, hence the flat spectrum 
@@ -267,7 +262,7 @@ How I'll apply scrambling:
 4. Payload:
     - Scramble with SRG LFSR for spectral flattening and randomization 
 
-### Physical Layer Framing (PLFRAME)
+## Physical Layer Framing (PLFRAME)
 Each PLFRAME in DVB-S2 corresponds to 
 ```cpp
 [ SoF | PLS | (optional pilots) | LDPC-encoded payload ]
@@ -325,7 +320,7 @@ Option B - Simulated
 
 
 
-### ACM + CSI Feedback USRP to HackRF: 
+## ACM + CSI Feedback USRP to HackRF: 
 Advantage: 
 - removes constraints in timing between transmit/receive
 - Bandwidth: USRP up to 50MS/s, HackRF up to 20MS/s
@@ -366,3 +361,67 @@ Lab Setup Possibilities:
 
 Carrier Frequency (RF): 
 - $\pm$500 Hz to $\pm$5 kHz
+
+## Channel Estimation in DVB-S2: 
+In DVB-S2, channel estimation is performed entirely at the receiver using known pilot symbols and PL (PHY Layer) framing structure. 
+
+The transmitter does *not* measure or directly "see" the channel
+
+### Receiver-side channel estimation process: 
+#### 1. Pilot symbol positions are predefined and known to both TX and RX 
+- They're insertered periodically (36 pilot symbols every 1440 data symbols) to aid coherent demodulation 
+#### 2. RX uses these pilots to: 
+- Estimate **channel gain and phase** (complex frequency response or impulse response) 
+- Perform **equalization, phase tracking, and timing recovery**
+- Optionallly compute **SNR / Es/N0 estimates** based on error between received and expected pilot symbols
+#### 3. The CIR (Channel Impulse Response) or Frequency Response (H(f)) is derived from those pilots tones via correlation 
+
+### CSI Feedback - DVB-S2 *Does Not* send Instantaneous Feedback 
+Unlike 5G or Wi-Fi, DVB-S2 does not use instantaneous feedback loops. It's a **one-way (broadcast)** standard: the satellite or ground station transmits, and tens of thousands of terminals receives 
+
+So, the receiver measures channel conditions locally, and in DVB-S2 ACM systems, the feedback path is out-of-band and slow, not instantaneous 
+
+#### Example: 
+- In interactive DVB-S2 systems (like DVB-RCS2, used for VSAT networks): 
+    - the user terminal (RX) periodically sends link-quality reports (e.g. Es/N0, PER) via a separate return channel (e.g. L-band, Ku uplink) 
+    - the Network Control Center (NCC) or hub modem uses that feedback to select the next MODCOD for that terminal's future downlink frames
+    - Feedback latency can be hundreds of milliseconds or more, not per-frame instantaneous 
+- **NOTE:** in pure broadcast DVB-S2 (TV, radio), there is no feedback at all - TX uses a fixed MODCOD for the entire multiplex
+
+#### 4. Instaneous Channel Use - Not Feasible in DVB-S2 
+Because of propagation delay (e.g. 250ms for GEO satellites), the channel response when the TX sends the next frame is already outdated  
+
+$\therefore$ DVB-S2 never relies on instantaneous feedback, instead it relies on statistical adaptation - e.g. average Es/N0, terminal link margin, rain fade statistics 
+
+#### 5. How Pilots are used (mathematically): 
+Given some pilot symbol $P_k$ is known (e.g. BPSK = +1 or -1): 
+
+At the RX, the corresponding received sample $Y_k$ is: 
+$$Y_k = H_k P_k + N_k$$
+
+So the channel estimate at that symbol is: 
+$$H_k = \frac{Y_k}{P_K}$$
+
+Then interpolation is performed between the pilot positions to estimate $H_n$ for all data symbols
+
+From this, you can compute **CIR** via IFFT: 
+$$h[n] = IFFT(H_k)$$
+
+And instantaneous SNR from pilot residuals: 
+$$SNR = \frac{E[|H_k P_k|^2]}{E[|Y_k - H_kP_k|^2]}$$
+
+**This feedback interval is usually 1-10 seconds, not per frame**
+
+### Return channel (DVB-RCS / RCS2): 
+The return path will bel ower rate and on a separate link 
+
+The receiver sends back: 
+- Link metrics (SNR, Eb/N0, PER, or quantized CQI index)
+- Frame acknowledgment (opt)
+- Recommended MCS Index (e.g. QPSK 2/3)
+
+This allows the transmitter to adapt:
+- Modulation order 
+- Code rate 
+- Frame length and pilot usage 
+
