@@ -12,7 +12,7 @@ import argparse
 from gnuradio import gr, blocks, digital, fec
 import numpy as np
 # Data Handling
-from packet_generator import PacketGenerator
+# from packet_generator import PacketGenerator
 from fec_segmentation import segment_bits, generate_bitstream_from_packets #, MCS_TABLE, MCS_LOOKUP
 from enc_dec import compute_generator_matrix
 from sionna.phy.fec import utils
@@ -279,7 +279,7 @@ def TX_init(
             socket.send(noisy_bb.astype(np.complex64).tobytes())
             time.sleep(len(noisy_bb)/Fs)
 
-            idle_time = np.random.uniform(0.05, 0.2) # 50-200ms gap
+            idle_time = np.random.uniform(1.00, 2.00) # 50-200ms gap
             noise_fill = np.random.normal(0, 0.01, len(symbol_frame)).astype(np.complex64)
             socket.send(noise_fill.tobytes())
             time.sleep(idle_time)

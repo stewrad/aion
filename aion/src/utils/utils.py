@@ -85,3 +85,21 @@ def bin2hex_str(
     hex_str = '%0*X' % ((len(bin_str) + 3) // 4, int(bin_str, 2))
 
     return hex_str
+
+def bin2decimal(bits_2d: np.ndarray) -> np.ndarray:
+    """
+    Convert 2D array of binary bits to decimal values.
+    
+    Parameters
+    ----------
+    bits_2d : np.ndarray of shape (n_symbols, bits_per_symbol)
+        Binary bits arranged as rows of symbols
+    
+    Returns
+    -------
+    np.ndarray of shape (n_symbols,)
+        Decimal values for each symbol
+    """
+    bits_per_symbol = bits_2d.shape[1]
+    powers = 2 ** np.arange(bits_per_symbol - 1, -1, -1)
+    return np.dot(bits_2d, powers)
