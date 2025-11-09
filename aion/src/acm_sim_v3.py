@@ -93,13 +93,16 @@ for snr in SNR_VALUES:
 
     print(f"Encoded {len(encoded_frames)} codewords (total {len(encoded_frames) * N} bits).")
     print(f'Modulation bits: {codeword[:10]}')
+    print(f'Codeword type: {type(codeword)}, Size: {len(codeword)}')
 
-    # Step 4: Optional BER simulation
-    noise = np.random.randn(*encoded_frames[0].shape)
-    snr_lin = 10 ** (snr / 10)
-    received = np.array(encoded_frames[0]) + noise / np.sqrt(snr_lin)
-    ber_est = np.mean((received > 0.5) != encoded_frames[0])
-    print(f"Estimated BER at {snr:.1f} dB ≈ {ber_est:.3e}")
+    # Step 4: MCS Modulation 
+
+    # # Step 4: Optional BER simulation
+    # noise = np.random.randn(*encoded_frames[0].shape)
+    # snr_lin = 10 ** (snr / 10)
+    # received = np.array(encoded_frames[0]) + noise / np.sqrt(snr_lin)
+    # ber_est = np.mean((received > 0.5) != encoded_frames[0])
+    # print(f"Estimated BER at {snr:.1f} dB ≈ {ber_est:.3e}")
 
 print("\n=== ACM Simulation Complete ===")
 print("Encoded bits ready for modulation stage.")

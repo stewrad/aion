@@ -3,17 +3,6 @@ from sionna.phy.fec import utils
 import scipy.sparse as sp
 
 # -------------------------
-# Load DVB-S2 H from ALIST
-# -------------------------
-alist_file = "alist/dvbs2_1_2_N16200.alist"
-alist = utils.load_alist(alist_file)
-H_dense, _, N, _ = utils.alist2mat(alist)
-M = H_dense.shape[0]
-K = N - M
-H_sparse = sp.csr_matrix(H_dense, dtype=np.uint8)
-# print(f"Loaded H: shape={H_sparse.shape}, K={K}, N={N}")
-
-# -------------------------
 # Convert H to systematic form to compute G
 # -------------------------
 def compute_generator_matrix(H):
@@ -45,40 +34,6 @@ def compute_generator_matrix(H):
     return G
 
 # -------------------------
-# Compute G
-# -------------------------
-G = compute_generator_matrix(H_dense)
-# print("Generator matrix computed:", G.shape)
-
-# -------------------------
-# Encode info bits
-# -------------------------
-u_bits = np.random.randint(0, 2, K, dtype=np.uint8)
-codeword = (u_bits @ G % 2).astype(np.uint8)
-# print("  Encoding complete")
-# print("Codeword length:", len(codeword))
-
-# -------------------------
-# Parity check
-# -------------------------
-parity_check = H_sparse.dot(codeword) % 2
-if np.all(parity_check == 0):
-    print("  Parity check passed")
-else: 
-    print(f"  Parity check failed: {np.sum(parity_check != 0)} unsatisfied parity checks")
-
-# -------------------------
-# Codeword ready for modulation
-# -------------------------
-# Convert to float if needed for BPSK/QPSK mapping
-# mod_bits = 2*codeword.astype(np.float32) - 1  # BPSK: 0->-1, 1->+1
-# print("Modulation-ready bits:", mod_bits[:32], "...")  # preview first 32 bits
-mod_input_bits = codeword.copy()
-# print("First 32 encoded bits:", mod_input_bits[:32])
-# Example reshape for QPSK
-# symbols = mod_input_bits.reshape(-1, 2)  # for QPSK
-
-# -------------------------
 # Optional: simple bit-flipping decoder
 # -------------------------
 def bit_flipping_decode(cw, H_sparse, max_iter=50):
@@ -97,21 +52,68 @@ def bit_flipping_decode(cw, H_sparse, max_iter=50):
         c[to_flip] ^= 1
     return c
 
-decoded = bit_flipping_decode(codeword, H_sparse)
-errors = np.sum(decoded[:K] != u_bits)
-# print(f"Info bits recovered errors: {errors}")
+if __name__ == "__main__":
+
+    # -------------------------
+    # Load DVB-S2 H from ALIST
+    # -------------------------
+    alist_file = "alist/dvbs2_1_2_N16200.alist"
+    alist = utils.load_alist(alist_file)
+    H_dense, _, N, _ = utils.alist2mat(alist)
+    M = H_dense.shape[0]
+    K = N - M
+    H_sparse = sp.csr_matrix(H_dense, dtype=np.uint8)
+    print(f"Loaded H: shape={H_sparse.shape}, K={K}, N={N}")
+
+    # -------------------------
+    # Compute G
+    # -------------------------
+    G = compute_generator_matrix(H_dense)
+    # print("Generator matrix computed:", G.shape)
+
+    # -------------------------
+    # Encode info bits
+    # -------------------------
+    u_bits = np.random.randint(0, 2, K, dtype=np.uint8)
+    codeword = (u_bits @ G % 2).astype(np.uint8)
+    # print("  Encoding complete")
+    # print("Codeword length:", len(codeword))
+
+    # -------------------------
+    # Parity check
+    # -------------------------
+    parity_check = H_sparse.dot(codeword) % 2
+    if np.all(parity_check == 0):
+        print("  Parity check passed")
+    else: 
+        print(f"  Parity check failed: {np.sum(parity_check != 0)} unsatisfied parity checks")
+
+    # -------------------------
+    # Codeword ready for modulation
+    # -------------------------
+    # Convert to float if needed for BPSK/QPSK mapping
+    # mod_bits = 2*codeword.astype(np.float32) - 1  # BPSK: 0->-1, 1->+1
+    # print("Modulation-ready bits:", mod_bits[:32], "...")  # preview first 32 bits
+    mod_input_bits = codeword.copy()
+    # print("First 32 encoded bits:", mod_input_bits[:32])
+    # Example reshape for QPSK
+    # symbols = mod_input_bits.reshape(-1, 2)  # for QPSK
+
+    decoded = bit_flipping_decode(codeword, H_sparse)
+    errors = np.sum(decoded[:K] != u_bits)
+    # print(f"Info bits recovered errors: {errors}")
 
 
 
 
 
-# # Possible Decoder following Demodulation in simulation:
-# from sionna.fec.ldpc.encoding import LDPC5GEncoder
-# from sionna.fec.ldpc.decoding import LDPC5GDecoder
+    # # Possible Decoder following Demodulation in simulation:
+    # from sionna.fec.ldpc.encoding import LDPC5GEncoder
+    # from sionna.fec.ldpc.decoding import LDPC5GDecoder
 
-# encoder = LDPC5GEncoder(H_sparse)
-# decoder = LDPC5GDecoder(H_sparse, hard_out=True, num_iter=50)
+    # encoder = LDPC5GEncoder(H_sparse)
+    # decoder = LDPC5GDecoder(H_sparse, hard_out=True, num_iter=50)
 
-# # Encode and decode
-# codeword = encoder(u_bits)
-# decoded_bits = decoder(llr_inputs)
+    # # Encode and decode
+    # codeword = encoder(u_bits)
+    # decoded_bits = decoder(llr_inputs)

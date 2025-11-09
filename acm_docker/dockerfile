@@ -20,13 +20,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
         uhd-host \
         hackrf \
         libhackrf-dev \
-        hackrf-tools \
         usbutils \
         && rm -rf /var/lib/apt/lists/*
 
 # Upgrade pip and install Python packages
 RUN pip install --upgrade pip setuptools wheel \
-    && pip install sionna numpy scipy matplotlib jupyterlab
+    && pip install sionna numpy scipy scapy matplotlib jupyterlab dspftw
 
 # Expose Jupyter port
 EXPOSE 8888
