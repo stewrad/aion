@@ -69,41 +69,50 @@ def select_mcs_for_snr(snr_db: float):
     return candidates[-1]['name']
 
 def insert_pilots(
-    data_frame: np.ndarray,
-    pilots: np.ndarray,
-    data_block: int=1440,
-    pilot_block: int=36
+    data_samples: np.ndarray,      # RRC-filtered data samples
+    pilot_samples: np.ndarray,     # RRC-filtered pilot samples
+    samples_per_symbol: int,       # From RRC (Fs/Rs)
+    data_symbols: int = 1440,      # DVB-S2: 1440 data symbols
+    pilot_symbols: int = 36        # DVB-S2: 36 pilot symbols
 ):
     """
-    Insert DVB-S2 style pilot blocks into the modulated symbol stream
-    Input: 
-    data_frame: np.ndarray
-        Modulated data symbols (complex)
-    pilots: np.ndarray
-        Modulated array of pilot symbols (complex) - will repeat or truncate as needed
-    data_block: int
-        Number of data symbols between pilot blocks (default 1440)
-    pilot_block: int
-        Number of pilot symbols per pilot block (default 36)
-    Returns: 
-    np.ndarray : data + pilots interleaved per DVB-S2 pattern 
+    Insert DVB-S2 pilot blocks at symbol-level intervals.
+    
+    Args:
+        data_samples: Modulated data (length = num_symbols × samples_per_symbol)
+        pilot_samples: Modulated pilots (length should be pilot_symbols × samples_per_symbol)
+        samples_per_symbol: Samples per symbol from RRC filter
+        data_symbols: Number of DATA SYMBOLS between pilot blocks (DVB-S2: 1440)
+        pilot_symbols: Number of PILOT SYMBOLS per block (DVB-S2: 36)
+    
+    Returns:
+        Combined data + pilots with correct DVB-S2 structure
     """
-
-    num_data = len(data_frame)
-    num_blocks = int(np.ceil(num_data / data_block))
-    total_pilots = num_blocks * pilot_block
-
-    # Repeat or trim pilots to fit
-    pilots = np.resize(pilots, total_pilots)
-
-
+    # Convert symbol counts to sample counts
+    data_block_samples = data_symbols * samples_per_symbol   # 1440 × 4 = 5760
+    pilot_block_samples = pilot_symbols * samples_per_symbol # 36 × 4 = 144
+    
+    # Validate pilot length
+    expected_pilot_len = pilot_block_samples
+    if len(pilot_samples) < expected_pilot_len:
+        # Repeat pilots to fill
+        pilot_samples = np.tile(pilot_samples, 
+                               int(np.ceil(expected_pilot_len / len(pilot_samples))))
+    pilot_samples = pilot_samples[:expected_pilot_len]
+    
+    # Calculate number of blocks
+    num_data_samples = len(data_samples)
+    num_blocks = int(np.ceil(num_data_samples / data_block_samples))
+    
+    # Build output
     out = []
-    pilot_idx = 0
     for i in range(num_blocks):
-        start = i * data_block
-        end = min(start + data_block, num_data)
-        out.append(data_frame[start:end])
-        out.append(pilots[pilot_idx:pilot_idx+pilot_block])
-        pilot_idx += pilot_block
-
+        # Extract data block
+        start = i * data_block_samples
+        end = min(start + data_block_samples, num_data_samples)
+        out.append(data_samples[start:end])
+        
+        # Append pilot block
+        out.append(pilot_samples)
+    
     return np.concatenate(out)

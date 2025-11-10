@@ -42,13 +42,14 @@ def suppress_output():
             sys.stderr = old_stderr
 # =============================================================================================
 
-def build_burst(snr, meta, sof, mcs_walsh, pilot_sym):
+def build_burst(snr, meta, sof, mcs_walsh, pilots):
     """
     Generate and encode one DVB-S2 burst (using your pipeline)
     """
     num_packets = meta['PACKETS_PER_BURST']
     Rs = meta['Rs']
     Fs = meta['Fs']
+    sps = int(round(Fs/Rs))
 
     mcs_name = select_mcs_for_snr(snr)
     mcs_entry = MCS_LOOKUP[mcs_name]
@@ -93,12 +94,22 @@ def build_burst(snr, meta, sof, mcs_walsh, pilot_sym):
         _, bb, _, _, _ = mod_func(encoded_frames[0], symbol_rate=Rs, sample_rate=Fs)
     logging.info(f'Modulated {len(bb)} Symbols as {mod_type}')
 
-    bb_w_pilot = insert_pilots(bb, pilot_sym)
-    _, mcs_sym, _, _, _ = plh_mod(mcs_walsh[:, mcs_idx], Rs, Fs)
-    symbol_frame = np.concatenate([sof, mcs_sym, bb_w_pilot])
+    logging.info(f'Modulated {len(bb)//sps} symbols ({len(bb)} samples) as {mod_type}')
+    logging.info(f'Pilot block: {len(pilots)} samples')
+
+    # Insert pilots at DVB-S2 symbol intervals
+    bb_w_pilot = insert_pilots(
+        data_samples=bb,
+        pilot_samples=pilots,
+        samples_per_symbol=sps,
+        data_symbols=1440,      # DVB-S2 standard
+        pilot_symbols=36        # DVB-S2 standard
+    )
+    _, mcs_samples, _, _, _ = plh_mod(mcs_walsh[:, mcs_idx], Rs, Fs)
+    sample_frame = np.concatenate([sof, mcs_samples, bb_w_pilot])
 
     # Apply AWGN
-    noisy_frame = awgn.awgn_gen(symbol_frame, snr)
+    noisy_frame = awgn.awgn_gen(sample_frame, snr)
     return noisy_frame.astype(np.complex64)
 
 # --------------------------
@@ -117,11 +128,11 @@ def noise_thread(socket, Fs: float=4000, noise_level: float=0.05):
 # --------------------------
 # Burst Thread
 # --------------------------
-def burst_thread(socket, meta, sof, mcs_walsh, pilot_sym, burst_active):
+def burst_thread(socket, meta, sof, mcs_walsh, pilots, burst_active):
     num_bursts = meta['NUM_BURSTS']
     # for pkt_idx in range(num_bursts):
     #     snr = np.random.uniform(30, 60)
-    #     burst = build_burst(snr, meta, sof, mcs_walsh, pilot_sym)
+    #     burst = build_burst(snr, meta, sof, mcs_walsh, pilots)
     #     socket.send(burst.tobytes())
     #     logging.info(f"[TX] Sent burst {pkt_idx+1}/{num_bursts} (SNR={snr:.1f} dB)")
     #     logging.info("=============================================================")
@@ -131,8 +142,8 @@ def burst_thread(socket, meta, sof, mcs_walsh, pilot_sym, burst_active):
     while True:
         if burst_active.is_set():
             i += 1
-            snr = np.random.uniform(3, 10)
-            burst = build_burst(snr, meta, sof, mcs_walsh, pilot_sym)
+            snr = np.random.uniform(0.5, 25)
+            burst = build_burst(snr, meta, sof, mcs_walsh, pilots)
             socket.send(burst.tobytes())
             logging.info(f"[TX] Sent burst {i} (SNR={snr:.1f} dB)")
             time.sleep(meta['burst_interval'])
@@ -175,11 +186,14 @@ def main():
 
     # MCS Indices generated as Walsh Codes 
     mcs_walsh = mcs_walsh_gen(32)
+    logging.info(f"MCS Walsh shape: {mcs_walsh.shape}")
+    logging.info(f"First code (idx 0): {mcs_walsh[0, :]}")  # Row
+    logging.info(f"Alt first code: {mcs_walsh[:, 0]}")      # Column
 
     # Pilot Symbol Generation and modulation as PI/2-BPSK
-    pilots = pilot_gen()
-    _, pilot_sym, _, _, _ = plh_mod(pilots, meta['Rs'], meta['Fs'])
-    # print(f'Shape Pilots: {np.shape(pilot_sym)}')
+    pilot_bits = pilot_gen()
+    _, pilots, _, _, _ = plh_mod(pilot_bits, meta['Rs'], meta['Fs'])
+    # print(f'Shape Pilots: {np.shape(pilots)}')
 
     Fs = meta['Fs']
     Rs = meta['Rs']
@@ -202,7 +216,7 @@ def main():
     burst_active = threading.Event()
 
     t_noise = threading.Thread(target=noise_thread, args=(socket, Fs, noise_level), daemon=True)
-    t_burst = threading.Thread(target=burst_thread, args=(socket, meta, sof, mcs_walsh, pilot_sym, burst_active), daemon=True)
+    t_burst = threading.Thread(target=burst_thread, args=(socket, meta, sof, mcs_walsh, pilots, burst_active), daemon=True)
     t_noise.start()
     t_burst.start()
 
