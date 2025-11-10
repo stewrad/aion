@@ -629,6 +629,7 @@ class DVB_S2_Receiver:
             'channel_quality': csi_report.channel_quality
         }
         
+        time.sleep(0.5) # 500 ms GEO delay 
         self.csi_socket.send_string(json.dumps(report_dict))
         logger.info(f"Sent CSI: SNR={csi_report.snr_db:.1f}dB, "
                    f"Rec MCS idx={csi_report.recommended_mcs_idx}")
