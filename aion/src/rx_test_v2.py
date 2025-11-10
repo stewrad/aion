@@ -391,10 +391,10 @@ class DVB_S2_Receiver:
         """Generate constellation points for demodulation"""
         
         if mod_type == 'QPSK':
-            const = np.array([1+1j, -1+1j, 1-1j, -1-1j]) / np.sqrt(2)
+            const = np.exp(2j*np.pi*np.array([1,3,7,5]) / 8.0)
             
         elif mod_type == '8PSK':
-            const = np.exp(2j * np.pi * np.arange(8) / 8)
+            const = np.exp(2j * np.pi * np.array([7,6,2,0,4,5,1,3]) / 8)
             
         elif mod_type == '16APSK':
             # DVB-S2 16APSK constellation

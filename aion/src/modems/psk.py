@@ -185,7 +185,8 @@ def qpsk_gen(
         raise ValueError('Beta must be between 0 and 1')
     
     # Generate a constellation with 0,1,2,3 symbol-to-bit mapping 
-    const = np.exp(2j*np.pi*np.arange(1, 8, 2) / 8.0)
+    # const = np.exp(2j*np.pi*np.arange(1, 8, 2) / 8.0)
+    const = np.exp(2j*np.pi*np.array([1,3,7,5]) / 8.0)
     constt = const[dibit_arr]
 
     # Symbol Mapping (00 -> 0, 01 -> 1, 10 -> 2, 11 -> 3) and Interpolation by upSampF
@@ -286,7 +287,7 @@ def psk8_gen(
         raise ValueError('Beta must be between 0 and 1')
     
     # Generate a constellation with 0,1,2,3 symbol-to-bit mapping 
-    const = np.exp(2j*np.pi*np.arange(0, 8) / 8.0)
+    const = np.exp(2j * np.pi * np.array([7,6,2,0,4,5,1,3]) / 8.0)
     constt = const[oct_arr]
 
     # Symbol Mapping (00 -> 0, 01 -> 1, 10 -> 2, 11 -> 3) and Interpolation by upSampF

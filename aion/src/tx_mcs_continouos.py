@@ -204,9 +204,9 @@ def main():
 
     # MCS Indices generated as Walsh Codes 
     mcs_walsh = mcs_walsh_gen(32)
-    logging.info(f"MCS Walsh shape: {mcs_walsh.shape}")
-    logging.info(f"First code (idx 0): {mcs_walsh[0, :]}")  # Row
-    logging.info(f"Alt first code: {mcs_walsh[:, 0]}")      # Column
+    # logging.info(f"MCS Walsh shape: {mcs_walsh.shape}")
+    # logging.info(f"First code (idx 0): {mcs_walsh[0, :]}")  # Row
+    # logging.info(f"Alt first code: {mcs_walsh[:, 0]}")      # Column
 
     # Pilot Symbol Generation and modulation as PI/2-BPSK
     pilot_bits = pilot_gen()
@@ -252,21 +252,21 @@ def main():
     t_burst.start()
 
 
-    print("\nCommands: 'on' = start bursts | 'off' = stop bursts | 'quit' = exit\n")
+    logging.info("\nCommands: 'on' = start bursts | 'off' = stop bursts | 'quit' = exit\n")
     try:
         while True:
             cmd = input("TX> ").strip().lower()
             if cmd == "on":
                 burst_active.set()
-                print("[TX] Bursts enabled.")
+                logging.info("[TX] Bursts enabled.")
             elif cmd == "off":
                 burst_active.clear()
-                print("[TX] Bursts paused.")
+                logging.info("[TX] Bursts paused.")
             elif cmd == "quit":
-                print("[TX] Exiting...")
+                logging.info("[TX] Exiting...")
                 break
             else:
-                print("Commands: on / off / quit")
+                logging.info("Commands: on / off / quit")
     except KeyboardInterrupt:
         pass
 
